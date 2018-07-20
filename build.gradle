@@ -27,6 +27,11 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
+
+	maven { 
+		url "https://jitpack.io" 
+	}
+	
 	mavenCentral()   
 }
 
@@ -36,7 +41,10 @@ configurations {
 }
 
 dependencies {
-    testCompile 'org.concordion:cubano-concordion:0.2.1'
+
+	// TODO remove Jitpack.io from repositories when upgrading to new  cubano-concordion version.
+    //testCompile 'org.concordion:cubano-concordion:0.2.1'
+    testCompile 'com.github.concordion:cubano:UpgradeToConcordion2.2.0-SNAPSHOT'
     
     testCompile 'org.hamcrest:hamcrest-junit:2.0.0.0'
     
