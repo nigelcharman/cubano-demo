@@ -1,5 +1,8 @@
 package example;
 
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+
 import org.concordion.api.AfterExample;
 import org.concordion.api.AfterSpecification;
 import org.concordion.api.AfterSuite;
@@ -12,16 +15,19 @@ import org.concordion.api.FailFast;
 import org.concordion.api.Scope;
 import org.concordion.api.ScopedObjectHolder;
 import org.concordion.api.extension.Extension;
+import org.concordion.cubano.config.Config;
+import org.concordion.cubano.config.ProxyConfig;
 import org.concordion.cubano.data.DataCleanupHelper;
 import org.concordion.cubano.driver.concordion.ExceptionHtmlCaptureExtension;
+import org.concordion.cubano.driver.http.HttpEasy;
+import org.concordion.cubano.framework.ConcordionBase;
+import org.concordion.cubano.template.AppConfig;
 import org.concordion.cubano.template.driver.domain.Role;
 import org.concordion.cubano.template.driver.domain.User;
 import org.concordion.cubano.template.driver.domain.UserPool;
 import org.concordion.cubano.template.driver.workflow.Workflow;
 import org.concordion.ext.LogbackLogMessenger;
-import org.concordion.ext.LoggingFormatterExtension;
 import org.concordion.ext.LoggingTooltipExtension;
-import org.concordion.ext.StoryboardLogListener;
 import org.concordion.integration.junit4.ConcordionRunner;
 import org.concordion.slf4j.ext.ReportLogger;
 import org.concordion.slf4j.ext.ReportLoggerFactory;
@@ -38,7 +44,7 @@ import ch.qos.logback.classic.Level;
 @RunWith(ConcordionRunner.class)
 @ConcordionResources("/customConcordion.css")
 @FailFast
-public abstract class ConcordionFixture extends ConcordionDomainBase {
+public abstract class ConcordionFixture extends ConcordionBase {
     private final ReportLogger logger = ReportLoggerFactory.getReportLogger(this.getClass().getName());
     private final Logger tooltipLogger = LoggerFactory.getLogger("TOOLTIP_" + this.getClass().getName());
 
@@ -51,9 +57,9 @@ public abstract class ConcordionFixture extends ConcordionDomainBase {
     @Extension
     private final ExceptionHtmlCaptureExtension htmlCapture = new ExceptionHtmlCaptureExtension(getStoryboard(), getBrowser());
 
-    @Extension
-    private final LoggingFormatterExtension loggerExtension = new LoggingFormatterExtension()
-            .registerListener(new StoryboardLogListener(getStoryboard()));
+    // @Extension
+    // private final LoggingFormatterExtension loggerExtension = new LoggingFormatterExtension()
+    // .registerListener(new StoryboardLogListener(getStoryboard()));
 
     @ConcordionScoped(Scope.SPECIFICATION)
     private ScopedObjectHolder<DataCleanupHelper> dataHolder = new ScopedObjectHolder<DataCleanupHelper>() {
@@ -62,6 +68,26 @@ public abstract class ConcordionFixture extends ConcordionDomainBase {
             return new DataCleanupHelper();
         }
     };
+
+    static {
+        ProxyConfig proxyConfig = Config.getInstance().getProxyConfig();
+        AppConfig config = AppConfig.getInstance();
+        config.logSettings();
+
+        // Set the proxy rules for all rest requests made during the test run
+        HttpEasy.withDefaults().allowAllHosts().trustAllCertificates().baseUrl(config.getBaseUrl());
+
+        if (proxyConfig.isProxyRequired()) {
+            HttpEasy.withDefaults()
+                    .proxy(new Proxy(Proxy.Type.HTTP,
+                            new InetSocketAddress(proxyConfig.getProxyHost(), proxyConfig.getProxyPort())))
+                    .bypassProxyForLocalAddresses(true);
+
+            if (!proxyConfig.getProxyUsername().isEmpty() && !proxyConfig.getProxyPassword().isEmpty()) {
+                HttpEasy.withDefaults().proxyAuth(proxyConfig.getProxyUsername(), proxyConfig.getProxyPassword());
+            }
+        }
+    }
 
     private Workflow workflow = null;
 
