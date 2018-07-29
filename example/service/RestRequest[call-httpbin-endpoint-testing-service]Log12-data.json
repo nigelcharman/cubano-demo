@@ -1,0 +1,13 @@
+{
+  "args": {
+    "name": "fred"
+  },
+  "headers": {
+    "Accept": "text/html, image/gif, image/jpeg, *; q\u003d.2, */*; q\u003d.2",
+    "Connection": "close",
+    "Host": "httpbin.org",
+    "User-Agent": "Java/1.8.0_151"
+  },
+  "origin": "35.202.68.136",
+  "url": "http://httpbin.org/get?name\u003dfred"
+}
